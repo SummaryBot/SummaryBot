@@ -10,11 +10,19 @@ class QwenHelper:
     def __init__(self):
         logging.info(f"Initializing Qwen helper.")
 
-    def get_response(self, text):
+    def get_response(self, text, context=None):
         url = "http://localhost:11434/api/chat"
         data = {
             "model": "qwen2.5:1.5b", 
             "messages": [
+                {
+                "role": "assistant",
+                "content": context if context is not None else ""
+                },
+                {
+                "role": "system",
+                "content": "Next message message is the main one"
+                },
                 {
                 "role": "user",
                 "content": text

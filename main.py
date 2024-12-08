@@ -22,25 +22,47 @@ async def handle_webhook():
         logger.info(f"Handling a webhook: {json_data}")
         update = Update(**json_data)
         chat_id = update.message.chat.id
+        message_id = update.message.message_id
+        user = json_data["message"]["from"]["first_name"] + " " + json_data["message"]["from"]["last_name"]
+        text = update.message.text
 
-        if update.message.text.startswith("/summarize"):
-            history = await app.bot.get_chat_history(chat_id)
+        if text.startswith("/summarize_"):
+            limit = None
+            try:
+                limit = int(text.split("_")[1])
+                print("limit", limit)
+                if limit <= 0:
+                    limit = None
+            except:
+                print("ooops")
+                pass
+            history = app.bot.get_chat_history(chat_id, limit)
             response = app.qwen_helper.get_response(
                 f"Summarize the following text in Russian: {history}"
             )
-        elif update.message.text.startswith("/chat"):
+        elif text.startswith("/summarize"):
+            history = app.bot.get_chat_history(chat_id)
+            app.bot.set_last_summarized_id(chat_id, message_id)
             response = app.qwen_helper.get_response(
-                f"{update.message.text.replace('/chat', '')} (reply in Russian)"
+                f"Summarize the following text in Russian: {history}"
             )
+        elif text.startswith("/chat"):
+            text = text.replace('/chat', '')
+            history = app.bot.get_chat_history(chat_id, 10)
+            response = app.qwen_helper.get_response(
+                f"{text} (reply in Russian)", history
+            )
+            app.bot.register_message(chat_id, message_id, user, text)
         else:
+            app.bot.register_message(chat_id, message_id, user, text)
             return "OK", 200
 
-        app.bot.send_message(chat_id, response)
+        app.bot.send_message(chat_id, message_id, response)
 
         return "OK", 200
     except Exception as e:
         logger.error(f"Something went wrong while handling a request: {e}")
-        return "Something went wrong", 500
+        return "OK", 200 # код успеха, чтобы не было проблем со стороны телеграмма (просто игнорируем)
 
 
 @app.before_serving
@@ -48,15 +70,10 @@ async def startup():
     bot_builder = (
         TelegramBotBuilder(Config.TELEGRAM_TOKEN)
         .with_webhook(Config.HOST)
-        .with_core_api(Config.TELEGRAM_CORE_API_ID, Config.TELEGRAM_CORE_API_HASH)
     )
 
     app.bot = bot_builder.get_bot()
     app.qwen_helper = QwenHelper()
-
-    if app.bot.core_api_client:
-        await app.bot.core_api_client.connect()
-        await app.bot.core_api_client.start()
 
 
 async def main():

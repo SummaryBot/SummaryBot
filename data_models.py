@@ -6,6 +6,7 @@ class Chat(BaseModel):
 
 
 class Message(BaseModel):
+    message_id: int
     text: str
     chat: Chat
 
