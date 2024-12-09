@@ -38,7 +38,7 @@ async def handle_webhook():
                 pass
             history = app.bot.get_chat_history(chat_id, limit)
             response = app.qwen_helper.get_response(
-                f"Summarize the following text in Russian: {history}"
+                f"Вы являетесь чат-ботом, который помогает пользователям быстро понять суть последних сообщений в чате. Ваша задача — кратко пересказать основные моменты и ключевые темы, обсуждаемые в последних сообщениях. Пожалуйста, предоставьте КРАТКОЕ резюме, выделяя ГЛАВНЫЕ идеи и ВАЖНЫЕ детали. НЕ ИЗМЕНЯЙ ИМЕНА ИМЕНА ЛИЦ УЧАСТВУЮЩИХ В ДИАЛОГЕ. Если есть части не на русском языке, не следует их переводить. НЕ ПЕРЕВОДИ ИМЕНА. Постарайся уложиться в несколько предложений: {history}"
             )
         elif text.startswith("/summarize"):
             history = app.bot.get_chat_history(chat_id)
